@@ -158,7 +158,7 @@ if(Boost_FOUND)
 endif()
 
 if(OPENSSL_FOUND)
-    target_link_libraries(${PROJECT_NAME} OpenSSL::Crypto)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenSSL::Crypto)
 endif()
 
 if(MINGW)
