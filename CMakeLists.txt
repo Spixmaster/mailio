@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(GNUInstallDirs)
+
 if(NOT DEFINED LIB_SUFFIX)
   set(LIB_SUFFIX "" CACHE STRING "Suffix for installed library path. Ex. 64 for lib64")
 endif(NOT DEFINED LIB_SUFFIX)
@@ -119,7 +121,6 @@ if(${MAILIO_BUILD_DOCUMENTATION})
 endif(${MAILIO_BUILD_DOCUMENTATION})
 
 add_library(${PROJECT_NAME} ${project_sources} ${project_headers})
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 # pkg-config support
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -147,11 +148,9 @@ install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION ${INCLUDE_INSTALL_DIR}
 # this is needed to generate a shared library.
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME export.hpp)
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
-        "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include;${CMAKE_CURRENT_BINARY_DIR}>"
-        "$<INSTALL_INTERFACE:include>"
-)
+target_include_directories(
+    ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include;${CMAKE_CURRENT_BINARY_DIR}>
+                           $<INSTALL_INTERFACE:include>)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
 
 if(Boost_FOUND)
@@ -176,47 +175,38 @@ endif()
 
 install(DIRECTORY include/mailio DESTINATION ${INCLUDE_INSTALL_DIR})
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
-
-# Target
-install(TARGETS ${PROJECT_NAME}
+# Target installation
+install(
+    TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+    INCLUDES
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-export(
+# Target export installation
+install(
     EXPORT ${PROJECT_NAME}-export
-    NAMESPACE ${PROJECT_NAME}::
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
-)
-
-install(EXPORT ${PROJECT_NAME}-export
-    NAMESPACE ${PROJECT_NAME}::
-    FILE ${PROJECT_NAME}-targets.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/
-)
+    FILE ${PROJECT_NAME}-targets.cmake
+    NAMESPACE ${PROJECT_NAME}::)
 
-# Config and version
+# Target export configuration and version
+include(CMakePackageConfigHelpers)
+
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/
-)
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/)
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
+    ${PROJECT_NAME}-config-version.cmake
+    COMPATIBILITY SameMajorVersion
+    VERSION ${PROJECT_VERSION})
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/)
 
 # optionally build examples
 if(${MAILIO_BUILD_EXAMPLES})
