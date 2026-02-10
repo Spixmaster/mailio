@@ -64,7 +64,7 @@ if(WIN32)
 endif(WIN32)
 
 find_package(Boost REQUIRED COMPONENTS date_time regex)
-find_package(OpenSSL)
+find_package(OpenSSL COMPONENTS Crypto SSL)
 set(CMAKE_THREAD_PREFER_PTHREAD)
 # "Use of both the imported target as well as this switch is highly recommended for new code."
 set(THREADS_PREFER_PTHREAD_FLAG)
@@ -154,11 +154,11 @@ target_include_directories(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
 
 if(Boost_FOUND)
-    target_link_libraries(${PROJECT_NAME} PUBLIC Boost::date_time Boost::regex)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Boost::date_time Boost::regex)
 endif()
 
 if(OPENSSL_FOUND)
-    target_link_libraries(${PROJECT_NAME} PUBLIC OpenSSL::Crypto)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
 endif()
 
 if(MINGW)
