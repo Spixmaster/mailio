@@ -150,7 +150,7 @@ include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME export.hpp)
 target_include_directories(
     ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include;${CMAKE_CURRENT_BINARY_DIR}>
-                           $<INSTALL_INTERFACE:include>)
+                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
 
 if(Boost_FOUND)
