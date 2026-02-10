@@ -120,7 +120,7 @@ if(${MAILIO_BUILD_DOCUMENTATION})
     endif(DOXYGEN_FOUND)
 endif(${MAILIO_BUILD_DOCUMENTATION})
 
-add_library(${PROJECT_NAME} ${project_sources} ${project_headers})
+add_library(${PROJECT_NAME} ${project_sources})
 
 # pkg-config support
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -139,17 +139,20 @@ else(IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}")
 endif(IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}")
 
 configure_file(mailio.pc.in ${CMAKE_BINARY_DIR}/mailio.pc IMMEDIATE @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/mailio.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/mailio.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 configure_file(${PROJECT_SOURCE_DIR}/include/version.hpp.in version.hpp)
-install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION ${INCLUDE_INSTALL_DIR}/${PROJECT_NAME})
+install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 # generate the export header for exporting symbols
 # this is needed to generate a shared library.
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME export.hpp)
 target_include_directories(
-    ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include;${CMAKE_CURRENT_BINARY_DIR}>
+    ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/>
+                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(
+    ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
 
@@ -171,7 +174,7 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-install(DIRECTORY include/mailio DESTINATION ${INCLUDE_INSTALL_DIR})
+# install(DIRECTORY include/mailio DESTINATION ${INCLUDE_INSTALL_DIR})
 
 # Target installation
 install(

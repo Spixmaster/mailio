@@ -2,7 +2,13 @@
 function(add_mailio_example SOURCE_FILE)
     get_filename_component(file_name ${SOURCE_FILE} NAME_WE)
     add_executable(${file_name} ${SOURCE_FILE})
-    target_link_libraries(${file_name} PUBLIC mailio ${CMAKE_THREAD_LIBS_INIT})
+    target_include_directories(${file_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/>
+                                                   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    target_include_directories(${file_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+                                                   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    target_link_libraries(${file_name} PRIVATE mailio)
+    target_link_libraries(${file_name} PRIVATE Boost::date_time Boost::regex)
+    target_link_libraries(${file_name} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
     install(TARGETS ${file_name} DESTINATION "${SHARE_INSTALL_DIR}/${PROJECT_NAME}/examples")
 endfunction(add_mailio_example)
 
