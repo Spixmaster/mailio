@@ -1,12 +1,18 @@
 cmake_minimum_required (VERSION 3.16.3)
 
+# Project
 project(mailio VERSION 0.26.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Modules
+include(CMakeDependentOption)
+include(CMakePackageConfigHelpers)
+include(GenerateExportHeader)
 include(GNUInstallDirs)
 
+# Installation paths
 if(NOT DEFINED LIB_SUFFIX)
   set(LIB_SUFFIX "" CACHE STRING "Suffix for installed library path. Ex. 64 for lib64")
 endif(NOT DEFINED LIB_SUFFIX)
@@ -56,19 +62,39 @@ option(MAILIO_DYN_LINK_TESTS "Turn on to dynamically link the tests." OFF)
 option(BUILD_SHARED_LIBS "Turn on to build mailio as a shared library. When off mailio is build as a static library." ON)
 
 # add a dependent option to build latex documentation or not.
-include(CMakeDependentOption)
 cmake_dependent_option(MAILIO_BUILD_LATEX_DOCUMENTATION "Build latex docs" ON "MAILIO_BUILD_DOCUMENTATION" ON)
+
+# Dependencies
+find_package(Boost REQUIRED COMPONENTS date_time regex)
+# find_package(OpenSSL COMPONENTS Crypto SSL) TODO
+find_package(Threads )
 
 if(WIN32)
     set(Boost_USE_STATIC_LIBS ON)
 endif(WIN32)
 
-find_package(Boost REQUIRED COMPONENTS date_time regex)
-find_package(OpenSSL COMPONENTS Crypto SSL)
 set(CMAKE_THREAD_PREFER_PTHREAD)
 # "Use of both the imported target as well as this switch is highly recommended for new code."
 set(THREADS_PREFER_PTHREAD_FLAG)
-find_package(Threads)
+
+# Target
+set(project_headers
+    ${PROJECT_SOURCE_DIR}/include/mailio/base64.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/binary.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/bit7.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/bit8.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/codec.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/dialog.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/imap.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/mailboxes.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/message.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/mime.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/percent.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/pop3.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/quoted_printable.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/q_codec.hpp
+    ${PROJECT_SOURCE_DIR}/include/mailio/smtp.hpp
+)
 
 set(project_sources
     ${PROJECT_SOURCE_DIR}/src/base64.cpp
@@ -88,25 +114,10 @@ set(project_sources
     ${PROJECT_SOURCE_DIR}/src/smtp.cpp
 )
 
-set(project_headers
-    ${PROJECT_SOURCE_DIR}/include/mailio/base64.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/binary.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/bit7.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/bit8.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/codec.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/dialog.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/imap.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/mailboxes.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/message.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/mime.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/percent.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/pop3.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/quoted_printable.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/q_codec.hpp
-    ${PROJECT_SOURCE_DIR}/include/mailio/smtp.hpp
-)
+add_library(${PROJECT_NAME} ${project_sources})
+configure_file(${PROJECT_SOURCE_DIR}/include/version.hpp.in version.hpp)
 
-# handle documentation
+# Documentation
 if(${MAILIO_BUILD_DOCUMENTATION})
     find_package(Doxygen COMPONENTS doxygen OPTIONAL_COMPONENTS dot)
     if(DOXYGEN_FOUND)
@@ -119,8 +130,6 @@ if(${MAILIO_BUILD_DOCUMENTATION})
         message(STATUS "doxygen was not found, documentation will not be built")
     endif(DOXYGEN_FOUND)
 endif(${MAILIO_BUILD_DOCUMENTATION})
-
-add_library(${PROJECT_NAME} ${project_sources})
 
 # pkg-config support
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -139,42 +148,36 @@ else(IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}")
 endif(IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}")
 
 configure_file(mailio.pc.in ${CMAKE_BINARY_DIR}/mailio.pc IMMEDIATE @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/mailio.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-
-configure_file(${PROJECT_SOURCE_DIR}/include/version.hpp.in version.hpp)
-install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 # generate the export header for exporting symbols
 # this is needed to generate a shared library.
-include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME export.hpp)
+
+# Headers
 target_include_directories(
     ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/>
                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(
     ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
                            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
 
-if(Boost_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Boost::date_time Boost::regex)
-endif()
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE Boost::date_time Boost::regex)
 
-if(OPENSSL_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
-endif()
+# target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL) TODO
 
 if(MINGW)
     target_link_libraries(${PROJECT_NAME} -lws2_32 )
 endif(MINGW)
 
+# Compile options
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W2 /WX)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# install(DIRECTORY include/mailio DESTINATION ${INCLUDE_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/mailio DESTINATION ${INCLUDE_INSTALL_DIR})
 
 # Target installation
 install(
@@ -185,6 +188,9 @@ install(
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/export.hpp DESTINATION "${INCLUDE_INSTALL_DIR}/${PROJECT_NAME}")
+install(FILES ${CMAKE_BINARY_DIR}/mailio.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/version.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 # Target export installation
 install(
@@ -194,18 +200,14 @@ install(
     NAMESPACE ${PROJECT_NAME}::)
 
 # Target export configuration and version
-include(CMakePackageConfigHelpers)
-
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/)
-
 write_basic_package_version_file(
     ${PROJECT_NAME}-config-version.cmake
     COMPATIBILITY SameMajorVersion
     VERSION ${PROJECT_VERSION})
-
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/)
