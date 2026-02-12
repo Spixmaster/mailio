@@ -1,21 +1,27 @@
-# "inline" function to add mailio sources easily.
-function(add_mailio_example SOURCE_FILE)
-    get_filename_component(file_name ${SOURCE_FILE} NAME_WE)
-    add_executable(${file_name} ${SOURCE_FILE})
-    target_include_directories(${file_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/>
-                                                   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-    target_include_directories(${file_name} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-                                                   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-    target_link_libraries(${file_name} PRIVATE Boost::date_time Boost::regex)
-    target_link_libraries(${file_name} PRIVATE mailio)
-    target_link_libraries(${file_name} PRIVATE OpenSSL::Crypto OpenSSL::SSL)
-    install(TARGETS ${file_name} DESTINATION "${SHARE_INSTALL_DIR}/${PROJECT_NAME}/examples")
-endfunction(add_mailio_example)
+# Dependencies
+find_package("OpenSSL" REQUIRED COMPONENTS "Crypto" "SSL")
 
-# find all the example files.
-file(GLOB example_files ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+# Makes a new target for each example file.
+function(make_example example_file)
+    message("${example_file}") # TODO
+    # Target
+    get_filename_component(EXAMPLE_TARGET "${example_file}" NAME_WE)
+    add_executable("${EXAMPLE_TARGET}" "${example_file}")
 
-# loop through each file and add the example
-foreach(file_name ${example_files})
-    add_mailio_example(${file_name})
-endforeach(file_name ${example_files})
+    # Headers
+    target_include_directories("${EXAMPLE_TARGET}" PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/>
+                                                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    target_include_directories("${EXAMPLE_TARGET}" PRIVATE $<BUILD_INTERFACE:${PROJECT_CURRENT_SOURCE_DIR}/include/>
+                                                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+    # Link libraries
+    target_link_libraries("${EXAMPLE_TARGET}" PRIVATE "Boost::date_time" "Boost::regex")
+    target_link_libraries("${EXAMPLE_TARGET}" PRIVATE "mailio")
+    target_link_libraries("${EXAMPLE_TARGET}" PRIVATE "OpenSSL::Crypto" "OpenSSL::SSL")
+endfunction()
+
+file(GLOB EXAMPLE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+
+foreach(file ${EXAMPLE_FILES})
+    make_example("${file}")
+endforeach()
