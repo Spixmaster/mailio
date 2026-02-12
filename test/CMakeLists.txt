@@ -1,7 +1,5 @@
 # Dependencies
-find_package("Boost" REQUIRED COMPONENTS "date_time" "regex" "unit_test_framework")
-find_package("${PROJECT_NAME}" REQUIRED)
-find_package("OpenSSL" REQUIRED COMPONENTS "Crypto" "SSL")
+find_package("Boost" REQUIRED COMPONENTS "unit_test_framework")
 
 # Makes a new target for each test file.
 function(make_test test_file)
@@ -20,9 +18,8 @@ function(make_test test_file)
     endif()
 
     # Link libraries
-    target_link_libraries("${TEST_TARGET}" PRIVATE "Boost::date_time" "Boost::regex" "Boost::unit_test_framework")
     target_link_libraries("${TEST_TARGET}" PRIVATE "${PROJECT_NAME}")
-    target_link_libraries("${TEST_TARGET}" PRIVATE "OpenSSL::Crypto" "OpenSSL::SSL")
+    target_link_libraries("${TEST_TARGET}" PRIVATE "Boost::unit_test_framework")
 endfunction()
 
 file(GLOB TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

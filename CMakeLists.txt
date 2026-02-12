@@ -37,6 +37,7 @@ if(${WIN32})
 endif()
 
 find_package("Boost" REQUIRED COMPONENTS "date_time" "regex")
+find_package("OpenSSL" REQUIRED COMPONENTS "SSL")
 
 if(${MAILIO_BUILD_DOCUMENTATION})
     find_package(
@@ -44,9 +45,6 @@ if(${MAILIO_BUILD_DOCUMENTATION})
         COMPONENTS "doxygen"
         OPTIONAL_COMPONENTS "dot")
 endif()
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package("Threads" REQUIRED)
 
 # Target
 set(PROJECT_SOURCES
@@ -76,6 +74,7 @@ target_include_directories("${PROJECT_NAME}" PUBLIC $<BUILD_INTERFACE:${CMAKE_CU
 
 # Link libraries
 target_link_libraries("${PROJECT_NAME}" PUBLIC "Boost::date_time" "Boost::regex")
+target_link_libraries("${PROJECT_NAME}" PUBLIC "OpenSSL::SSL")
 
 if(${MINGW})
     target_link_libraries("${PROJECT_NAME}" PUBLIC "-lws2_32")
