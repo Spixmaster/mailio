@@ -11,7 +11,7 @@ function(make_test test_file)
     add_test(
         NAME "${TEST_TARGET}"
         COMMAND "${TEST_TARGET}"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test/")
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/")
 
     if(${MAILIO_DYN_LINK_TESTS})
         target_compile_definitions("${TEST_TARGET}" PRIVATE "BOOST_TEST_DYN_LINK")
