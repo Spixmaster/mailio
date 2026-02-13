@@ -4,6 +4,17 @@ if("${CMAKE_CURRENT_BINARY_DIR}/" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/")
     message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
 
+# General
+project(
+    "mailio"
+    DESCRIPTION "Cross-platform MIME library for SMTP, POP3, and IMAP protocols."
+    HOMEPAGE_URL "https://github.com/karastojko/mailio"
+    LANGUAGES "CXX"
+    VERSION "0.26.0")
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Modules
 include("CMakeDependentOption")
 include("CMakePackageConfigHelpers")
@@ -19,17 +30,6 @@ option(MAILIO_BUILD_TESTS "Turn on to build the tests." ON)
 
 cmake_dependent_option(MAILIO_BUILD_LATEX_DOCUMENTATION "Build latex documentation" ON MAILIO_BUILD_DOCUMENTATION ON)
 cmake_dependent_option(MAILIO_DYN_LINK_TESTS "Turn on to dynamically link the tests." ON MAILIO_BUILD_TESTS ON)
-
-# General
-project(
-    "mailio"
-    DESCRIPTION "Cross-platform MIME library for SMTP, POP3, and IMAP protocols."
-    HOMEPAGE_URL "https://github.com/karastojko/mailio"
-    LANGUAGES "CXX"
-    VERSION "0.26.0")
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Dependencies
 if(${WIN32})
