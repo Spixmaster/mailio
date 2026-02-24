@@ -26,10 +26,17 @@ option(BUILD_SHARED_LIBS "Turn on to build mailio as a shared library. When off 
        ON)
 option(MAILIO_BUILD_DOCUMENTATION "Turn on to build doxygen based documentation." ON)
 option(MAILIO_BUILD_EXAMPLES "Turn on to build examples." ON)
+option(MAILIO_BUILD_LATEX_DOCUMENTATION "Turn on to build latex documentation." ON)
 option(MAILIO_BUILD_TESTS "Turn on to build the tests." ON)
+option(MAILIO_DYN_LINK_TESTS "Turn on to dynamically link the tests.")
 
-cmake_dependent_option(MAILIO_BUILD_LATEX_DOCUMENTATION "Build latex documentation" ON MAILIO_BUILD_DOCUMENTATION ON)
-cmake_dependent_option(MAILIO_DYN_LINK_TESTS "Turn on to dynamically link the tests." ON MAILIO_BUILD_TESTS ON)
+if(${MAILIO_BUILD_LATEX_DOCUMENTATION} AND NOT ${MAILIO_BUILD_DOCUMENTATION})
+    message(FATAL_ERROR "LaTeX documentation requires documentation.")
+endif()
+
+if(${MAILIO_DYN_LINK_TESTS} AND NOT ${MAILIO_BUILD_TESTS})
+    message(FATAL_ERROR "Tests with dynamic linking require tests.")
+endif()
 
 # Dependencies
 if(${WIN32})
